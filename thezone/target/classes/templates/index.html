@@ -9,25 +9,36 @@
         .btn { background: #6200ea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; }
         .btn:hover { background: #7c4dff; }
         
-        /* 3-Column Masonry Layout */
-        .post-container {
-            column-count: 3;
-            column-gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .post-container { column-count: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto; }
         
         .post-card {
             background: #1e1e1e;
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 20px;
-            break-inside: avoid; /* Prevents posts from being split across columns */
+            break-inside: avoid;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer; 
+            transition: transform 0.2s; 
         }
-        .post-card p { margin-top: 0; line-height: 1.5; }
-        .post-card img { max-width: 100%; border-radius: 5px; margin-top: 15px; display: block; }
-        .date { font-size: 0.8em; color: #888; margin-top: 10px; text-align: right; }
+        .post-card:hover { transform: scale(1.02); }
+        
+        .post-content { 
+            line-height: 1.5; 
+            margin-bottom: 12px; 
+            /* Prevents long unbroken words from extending past the card bubble */
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        .post-content p { margin: 0; display: inline; }
+        
+        .post-content p.full-text { display: none; }
+        
+        .read-more-btn { background: none; border: none; color: #7c4dff; cursor: pointer; padding: 0; margin-top: 8px; font-weight: bold; font-size: 0.9em; display: block; }
+        .read-more-btn:hover { text-decoration: underline; }
+
+        .post-card img { max-width: 100%; border-radius: 5px; margin-top: 10px; display: block; }
+        .date { font-size: 0.8em; color: #888; margin-top: 15px; text-align: right; }
     </style>
 </head>
 <body>
@@ -37,12 +48,43 @@
     </div>
 
     <div class="post-container">
-        <div class="post-card" th:each="post : ${posts}">
-            <p th:text="${post.content}"></p>
-            <!-- Only show image if one was selected -->
+        <div class="post-card" th:each="post : ${posts}" th:onclick="'window.location.href=\'/post/' + ${post.id} + '\''">
+            
+            <div class="post-content">
+                <th:block th:if="${#strings.length(post.content) > 100}">
+                    <p class="short-text" th:text="${#strings.substring(post.content, 0, 100)} + '...'"></p>
+                    <p class="full-text" th:text="${post.content}"></p>
+                    <button class="read-more-btn" onclick="toggleReadMore(event, this)">Read more</button>
+                </th:block>
+                
+                <th:block th:unless="${#strings.length(post.content) > 100}">
+                    <p th:text="${post.content}"></p>
+                </th:block>
+            </div>
+
             <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}" alt="Game Image">
             <div class="date" th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy HH:mm')}"></div>
         </div>
     </div>
+
+    <script>
+        function toggleReadMore(event, button) {
+            event.stopPropagation(); 
+            
+            const container = button.parentElement;
+            const shortText = container.querySelector('.short-text');
+            const fullText = container.querySelector('.full-text');
+            
+            if (shortText.style.display === 'none') {
+                shortText.style.display = 'inline';
+                fullText.style.display = 'none';
+                button.innerText = 'Read more';
+            } else {
+                shortText.style.display = 'none';
+                fullText.style.display = 'inline';
+                button.innerText = 'Read less';
+            }
+        }
+    </script>
 </body>
 </html>
