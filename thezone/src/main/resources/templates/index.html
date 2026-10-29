@@ -20,24 +20,43 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             cursor: pointer; 
             transition: transform 0.2s; 
+            /* NEW: Defines this card as a container so the image can measure its width */
+            container-type: inline-size; 
         }
         .post-card:hover { transform: scale(1.02); }
         
-        .post-content { 
-            line-height: 1.5; 
-            margin-bottom: 12px; 
-            /* Prevents long unbroken words from extending past the card bubble */
+        .post-content { margin-bottom: 12px; }
+        
+        .post-text {
+            white-space: pre-wrap;
             overflow-wrap: break-word;
             word-wrap: break-word;
+            line-height: 1.5;
+            margin: 0;
         }
-        .post-content p { margin: 0; display: inline; }
         
-        .post-content p.full-text { display: none; }
+        .clamped {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
         
         .read-more-btn { background: none; border: none; color: #7c4dff; cursor: pointer; padding: 0; margin-top: 8px; font-weight: bold; font-size: 0.9em; display: block; }
         .read-more-btn:hover { text-decoration: underline; }
 
-        .post-card img { max-width: 100%; border-radius: 5px; margin-top: 10px; display: block; }
+        /* UPDATED: Image scaling and 1:2 max aspect ratio */
+        .post-card img { 
+            width: 100%; 
+            height: auto; 
+            max-height: 200cqi; /* 200% of container width (1:2 ratio) */
+            object-fit: cover; /* Crops the extra height without stretching */
+            object-position: top; /* Crops from the bottom so faces/tops aren't lost */
+            border-radius: 5px; 
+            margin-top: 10px; 
+            display: block; 
+        }
+        
         .date { font-size: 0.8em; color: #888; margin-top: 15px; text-align: right; }
     </style>
 </head>
@@ -51,15 +70,8 @@
         <div class="post-card" th:each="post : ${posts}" th:onclick="'window.location.href=\'/post/' + ${post.id} + '\''">
             
             <div class="post-content">
-                <th:block th:if="${#strings.length(post.content) > 100}">
-                    <p class="short-text" th:text="${#strings.substring(post.content, 0, 100)} + '...'"></p>
-                    <p class="full-text" th:text="${post.content}"></p>
-                    <button class="read-more-btn" onclick="toggleReadMore(event, this)">Read more</button>
-                </th:block>
-                
-                <th:block th:unless="${#strings.length(post.content) > 100}">
-                    <p th:text="${post.content}"></p>
-                </th:block>
+                <div class="post-text clamped" th:text="${post.content}"></div>
+                <button class="read-more-btn" onclick="toggleReadMore(event, this)">Read more</button>
             </div>
 
             <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}" alt="Game Image">
@@ -68,21 +80,29 @@
     </div>
 
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const posts = document.querySelectorAll('.post-text');
+            posts.forEach(post => {
+                if (post.scrollHeight <= post.clientHeight) {
+                    const btn = post.nextElementSibling;
+                    if (btn && btn.classList.contains('read-more-btn')) {
+                        btn.style.display = 'none';
+                    }
+                }
+            });
+        });
+
         function toggleReadMore(event, button) {
             event.stopPropagation(); 
             
-            const container = button.parentElement;
-            const shortText = container.querySelector('.short-text');
-            const fullText = container.querySelector('.full-text');
+            const textDiv = button.previousElementSibling;
             
-            if (shortText.style.display === 'none') {
-                shortText.style.display = 'inline';
-                fullText.style.display = 'none';
-                button.innerText = 'Read more';
-            } else {
-                shortText.style.display = 'none';
-                fullText.style.display = 'inline';
+            if (textDiv.classList.contains('clamped')) {
+                textDiv.classList.remove('clamped');
                 button.innerText = 'Read less';
+            } else {
+                textDiv.classList.add('clamped');
+                button.innerText = 'Read more';
             }
         }
     </script>
