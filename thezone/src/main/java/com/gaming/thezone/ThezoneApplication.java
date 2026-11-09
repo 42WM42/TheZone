@@ -2,6 +2,10 @@ package com.gaming.thezone;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+/**
+ * Testing the push and pull on git hub
+ * ThezoneApplication
+ */
 
 @SpringBootApplication
 public class ThezoneApplication {
