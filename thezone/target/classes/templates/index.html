@@ -6,76 +6,71 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
         .header { text-align: center; margin-bottom: 30px; }
-        .btn { background: #6200ea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .btn { background: #6200ea; color: white; padding: 10px 20px; text-decoration: none; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; }
         .btn:hover { background: #7c4dff; }
         
         .post-container { column-count: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto; }
         
         .post-card {
-            background: #1e1e1e;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            break-inside: avoid;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            cursor: pointer; 
-            transition: transform 0.2s; 
-            /* NEW: Defines this card as a container so the image can measure its width */
-            container-type: inline-size; 
+            background: #1e1e1e; border-radius: 8px; padding: 15px; margin-bottom: 20px;
+            break-inside: avoid; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer; transition: transform 0.2s; container-type: inline-size; 
         }
         .post-card:hover { transform: scale(1.02); }
         
         .post-content { margin-bottom: 12px; }
         
         .post-text {
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
-            word-wrap: break-word;
-            line-height: 1.5;
-            margin: 0;
+            white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word;
+            line-height: 1.5; margin: 0;
         }
-        
-        .clamped {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+        .clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         
         .read-more-btn { background: none; border: none; color: #7c4dff; cursor: pointer; padding: 0; margin-top: 8px; font-weight: bold; font-size: 0.9em; display: block; }
         .read-more-btn:hover { text-decoration: underline; }
 
-        /* UPDATED: Image scaling and 1:2 max aspect ratio */
-        .post-card img { 
-            width: 100%; 
-            height: auto; 
-            max-height: 200cqi; /* 200% of container width (1:2 ratio) */
-            object-fit: cover; /* Crops the extra height without stretching */
-            object-position: top; /* Crops from the bottom so faces/tops aren't lost */
-            border-radius: 5px; 
-            margin-top: 10px; 
-            display: block; 
-        }
+        .post-card img { width: 100%; height: auto; max-height: 200cqi; object-fit: cover; object-position: top; border-radius: 5px; margin-top: 10px; display: block; }
         
-        .date { font-size: 0.8em; color: #888; margin-top: 15px; text-align: right; }
+        .author-date { display: flex; justify-content: space-between; font-size: 0.8em; color: #888; margin-top: 15px; }
+        .admin-panel { max-width: 1200px; margin: 0 auto 30px auto; background: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #ff5252; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Welcome to The Zone</h1>
-        <a href="/make-post" class="btn">Make Post</a>
+        <p style="color: #aaa; margin-bottom: 20px;">Logged in as: <span style="color: white; font-weight: bold;" th:text="${currentUser}"></span></p>
+        
+        <div style="display: flex; justify-content: center; gap: 15px;">
+            <a href="/make-post" class="btn">Make Post</a>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" class="btn" style="background: #333;">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel (Only visible to 19073@acs.sch.ae) -->
+    <div th:if="${isAdmin}" class="admin-panel">
+        <h3 style="margin-top: 0; color: #ff5252;">Admin Dashboard - User Management</h3>
+        <form th:action="@{/admin/ban}" method="post" style="display: flex; gap: 10px;">
+            <select name="email" style="padding: 10px; border-radius: 5px; flex-grow: 1; background: #2a2a2a; color: white; border: none;">
+                <option th:each="user : ${users}" th:value="${user.email}" th:text="${user.email} + (${user.banned} ? ' (BANNED)' : '')"></option>
+            </select>
+            <button type="submit" class="btn" style="background: #ff5252;">Toggle Ban Status</button>
+        </form>
     </div>
 
     <div class="post-container">
         <div class="post-card" th:each="post : ${posts}" th:onclick="'window.location.href=\'/post/' + ${post.id} + '\''">
-            
             <div class="post-content">
                 <div class="post-text clamped" th:text="${post.content}"></div>
                 <button class="read-more-btn" onclick="toggleReadMore(event, this)">Read more</button>
             </div>
-
-            <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}" alt="Game Image">
-            <div class="date" th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy HH:mm')}"></div>
+            <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}">
+            
+            <div class="author-date">
+                <span th:text="${post.authorEmail}"></span>
+                <span th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy')}"></span>
+            </div>
         </div>
     </div>
 
@@ -94,9 +89,7 @@
 
         function toggleReadMore(event, button) {
             event.stopPropagation(); 
-            
             const textDiv = button.previousElementSibling;
-            
             if (textDiv.classList.contains('clamped')) {
                 textDiv.classList.remove('clamped');
                 button.innerText = 'Read less';

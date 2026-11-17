@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - The Zone</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .auth-box { background: #1e1e1e; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; width: 100%; max-width: 400px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; background: #2a2a2a; color: white; }
+        .btn { background: #6200ea; color: white; padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .btn:hover { background: #7c4dff; }
+        .error { color: #ff5252; margin-bottom: 10px; font-weight: bold; }
+        a { color: #7c4dff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="auth-box">
+        <h2>Login to The Zone</h2>
+        <div th:if="${param.error}" class="error">Invalid email/password, or account is banned.</div>
+        <div th:if="${param.logout}" style="color: #4CAF50; margin-bottom: 10px;">You have been logged out.</div>
+        <div th:if="${param.registered}" style="color: #4CAF50; margin-bottom: 10px;">Registration successful! Please log in.</div>
+        
+        <form th:action="@{/login}" method="post">
+            <input type="email" name="username" placeholder="Email Address" required autofocus>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" class="btn">Login</button>
+        </form>
+        <p style="margin-top: 20px;">Don't have an account? <a href="/register">Sign up</a></p>
+    </div>
+</body>
+</html>

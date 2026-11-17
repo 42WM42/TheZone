@@ -4,99 +4,96 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
+import java.security.Principal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Controller
 public class PostController {
 
-    private final PostRepository repo;
+    private final PostService postService; 
+    private final UserRepository userRepository; 
 
-    public PostController(PostRepository repo) {
-        this.repo = repo;
+    public PostController(PostService postService, UserRepository userRepository) {
+        this.postService = postService;
+        this.userRepository = userRepository;
     }
 
-    // VIEW all posts (The Zone Feed)
     @GetMapping("/")
-    public String home(Model model) {
-        model.addAttribute("posts", repo.findAll());
+    public String home(Model model, Principal principal) {
+        model.addAttribute("posts", postService.getAllPosts());
+        model.addAttribute("currentUser", principal.getName());
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            model.addAttribute("isAdmin", true);
+            model.addAttribute("users", userRepository.findAll());
+        } else {
+            model.addAttribute("isAdmin", false);
+        }
         return "index";
     }
 
-    // SHOW the make post page
     @GetMapping("/make-post")
     public String showMakePostPage(Model model) {
         model.addAttribute("newPost", new Post());
         return "make-post";
     }
 
-    // ADD a new post
     @PostMapping("/post")
-    public String createPost(@ModelAttribute Post post, @RequestParam("imageFile") MultipartFile file) {
-        saveImageFile(post, file);
-        repo.save(post);
+    public String createPost(@ModelAttribute Post post, @RequestParam("imageFile") MultipartFile file, Principal principal) {
+        post.setAuthorEmail(principal.getName());
+        postService.saveImageFile(post, file);
+        postService.savePost(post);
         return "redirect:/"; 
     }
 
-    // VIEW a single post fully
     @GetMapping("/post/{id}")
-    public String viewPost(@PathVariable Long id, Model model) {
-        Post post = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid post Id: " + id));
-        model.addAttribute("post", post);
+    public String viewPost(@PathVariable Long id, Model model, Principal principal) {
+        model.addAttribute("post", postService.getPostById(id));
+        model.addAttribute("currentUser", principal.getName());
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        model.addAttribute("isAdmin", isAdmin);
+        
         return "post-view";
     }
 
-    // SHOW the edit post page
     @GetMapping("/post/{id}/edit")
-    public String showEditPostPage(@PathVariable Long id, Model model) {
-        Post post = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid post Id: " + id));
+    public String showEditPostPage(@PathVariable Long id, Model model, Principal principal) {
+        Post post = postService.getPostById(id);
+        if (!post.getAuthorEmail().equals(principal.getName())) {
+            return "redirect:/post/" + id; // Kicks them out if not the author
+        }
         model.addAttribute("post", post);
         return "edit-post";
     }
 
-    // UPDATE an existing post
     @PostMapping("/post/{id}/edit")
-    public String editPost(@PathVariable Long id, @ModelAttribute Post updatedPost, @RequestParam("imageFile") MultipartFile file) {
-        Post existingPost = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid post Id: " + id));
-        
-        // Update content
+    public String editPost(@PathVariable Long id, @ModelAttribute Post updatedPost, @RequestParam("imageFile") MultipartFile file, Principal principal) {
+        Post existingPost = postService.getPostById(id);
+        if (!existingPost.getAuthorEmail().equals(principal.getName())) {
+            return "redirect:/post/" + id;
+        }
         existingPost.setContent(updatedPost.getContent());
-        
-        // If a new image was uploaded, overwrite the old image URL
         if (!file.isEmpty()) {
-            saveImageFile(existingPost, file);
+            postService.saveImageFile(existingPost, file);
         }
-        
-        repo.save(existingPost);
-        return "redirect:/post/" + id; // Redirect back to the full post view
+        postService.savePost(existingPost);
+        return "redirect:/post/" + id; 
     }
 
-    // DELETE a post
     @PostMapping("/post/{id}/delete")
-    public String deletePost(@PathVariable Long id) {
-        repo.deleteById(id);
-        return "redirect:/";
-    }
-
-    // Helper method to handle file saving logic
-    private void saveImageFile(Post post, MultipartFile file) {
-        if (!file.isEmpty()) {
-            try {
-                String uploadDir = "uploads/";
-                Path uploadPath = Paths.get(uploadDir);
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-                String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-                Path filePath = uploadPath.resolve(fileName);
-                Files.copy(file.getInputStream(), filePath);
-                post.setImageUrl("/uploads/" + fileName);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+    public String deletePost(@PathVariable Long id, Principal principal) {
+        Post post = postService.getPostById(id);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        
+        // Allowed if you are the author OR if you are an Admin
+        if (post.getAuthorEmail().equals(principal.getName()) || isAdmin) {
+            postService.deletePost(id);
         }
+        return "redirect:/";
     }
 }
