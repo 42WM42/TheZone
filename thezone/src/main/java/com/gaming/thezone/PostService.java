@@ -20,42 +20,35 @@ public class PostService {
         this.postRepository = postRepository;
     }
 
-    public List<Post> getAllPosts() {
-        return postRepository.findAll();
-    }
+    public List<Post> getAllPosts() { return postRepository.findAll(); }
 
     public Post getPostById(Long id) {
-        return postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid post Id: " + id));
+        return postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid post Id: " + id));
     }
 
-    public void savePost(Post post) {
-        postRepository.save(post);
-    }
+    public void savePost(Post post) { postRepository.save(post); }
 
-    public void deletePost(Long id) {
-        postRepository.deleteById(id);
+    public void deletePost(Long id) { postRepository.deleteById(id); }
+
+    public void updateUsernamesOnPosts(String email, String newUsername) {
+        List<Post> allPosts = postRepository.findAll();
+        for (Post post : allPosts) {
+            if (email.equals(post.getAuthorEmail())) {
+                post.setAuthorUsername(newUsername);
+                postRepository.save(post);
+            }
+        }
     }
 
     public void saveImageFile(Post post, MultipartFile file) {
         if (file != null && !file.isEmpty()) {
             try {
-                // Create the uploads folder if it doesn't exist
                 Path uploadPath = Paths.get(UPLOAD_DIR);
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-
-                // Generate a unique file name to prevent users from overwriting each other's photos
+                if (!Files.exists(uploadPath)) { Files.createDirectories(uploadPath); }
                 String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
                 Path filePath = uploadPath.resolve(fileName);
-
-                // Save the physical file to the uploads folder
                 Files.copy(file.getInputStream(), filePath);
-
-                // Save the URL text string to the database blueprint
                 post.setImageUrl("/uploads/" + fileName);
-
             } catch (IOException e) {
                 e.printStackTrace();
             }

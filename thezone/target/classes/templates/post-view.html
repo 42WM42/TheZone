@@ -8,10 +8,9 @@
         .post-card { background: #1e1e1e; border-radius: 8px; padding: 25px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.3); container-type: inline-size; }
         .post-content { line-height: 1.6; font-size: 1.1em; margin-bottom: 20px; white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word; margin-right: 40px; }
         .post-card img { width: 100%; height: auto; max-height: 200cqi; object-fit: cover; object-position: top; border-radius: 5px; display: block; margin: 0 auto; }
-        .date { font-size: 0.9em; color: #888; margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; display: flex; justify-content: space-between;}
+        .date { font-size: 0.9em; color: #888; margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; display: flex; justify-content: space-between; font-weight: bold;}
         .back-link { color: #7c4dff; text-decoration: none; display: inline-block; margin-bottom: 20px; font-weight: bold; }
         .back-link:hover { text-decoration: underline; }
-        
         .menu-container { position: absolute; top: 20px; right: 20px; }
         .three-dots { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0 10px; }
         .dropdown-content { display: none; position: absolute; right: 0; background-color: #2a2a2a; min-width: 120px; box-shadow: 0px 8px 16px rgba(0,0,0,0.5); border-radius: 5px; z-index: 1; overflow: hidden; }
@@ -25,16 +24,10 @@
     <a href="/" class="back-link">← Back to Feed</a>
 
     <div class="post-card">
-        
-        <!-- Only shows 3 dots if the viewer is the Author OR an Admin -->
-        <div class="menu-container" th:if="${post.authorEmail == currentUser or isAdmin}">
+        <div class="menu-container" th:if="${post.authorEmail == currentUserEmail or isAdmin}">
             <button class="three-dots" onclick="toggleMenu()">⋮</button>
             <div id="dropdown" class="dropdown-content">
-                
-                <!-- Admins can't edit other people's text, only the author can -->
-                <a th:if="${post.authorEmail == currentUser}" th:href="@{/post/{id}/edit(id=${post.id})}">Edit</a>
-                
-                <!-- Both author and Admin can delete -->
+                <a th:if="${post.authorEmail == currentUserEmail}" th:href="@{/post/{id}/edit(id=${post.id})}">Edit</a>
                 <form th:action="@{/post/{id}/delete(id=${post.id})}" method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
                     <button type="submit">Delete</button>
                 </form>
@@ -45,7 +38,7 @@
         <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}">
         
         <div class="date">
-            <span th:text="'Posted by: ' + ${post.authorEmail}"></span>
+            <span style="color: #03dac6;" th:text="'Posted by: @' + ${post.authorUsername}"></span>
             <span th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy HH:mm')}"></span>
         </div>
     </div>

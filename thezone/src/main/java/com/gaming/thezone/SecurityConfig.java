@@ -38,13 +38,13 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Creates your admin account automatically on startup with password "admin123"
     @Bean
     public CommandLineRunner seedAdmin(UserRepository userRepo, PasswordEncoder encoder) {
         return args -> {
             if (userRepo.findByEmail("19073@acs.sch.ae").isEmpty()) {
                 User admin = new User();
                 admin.setEmail("19073@acs.sch.ae");
+                admin.setUsername("admin42");
                 admin.setPassword(encoder.encode("admin123")); 
                 admin.setRole("ROLE_ADMIN");
                 admin.setBanned(false);

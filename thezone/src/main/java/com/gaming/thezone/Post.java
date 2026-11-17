@@ -14,6 +14,7 @@ public class Post {
     private String content;
     private String imageUrl;
     private String authorEmail;
+    private String authorUsername;
     private LocalDateTime createdAt;
 
     public Post() {
@@ -28,6 +29,8 @@ public class Post {
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public String getAuthorEmail() { return authorEmail; }
     public void setAuthorEmail(String authorEmail) { this.authorEmail = authorEmail; }
+    public String getAuthorUsername() { return authorUsername; }
+    public void setAuthorUsername(String authorUsername) { this.authorUsername = authorUsername; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

@@ -22,7 +22,12 @@ public class PostController {
     @GetMapping("/")
     public String home(Model model, Principal principal) {
         model.addAttribute("posts", postService.getAllPosts());
-        model.addAttribute("currentUser", principal.getName());
+        model.addAttribute("currentUserEmail", principal.getName());
+        
+        User currentUser = userRepository.findByEmail(principal.getName()).orElse(null);
+        if (currentUser != null) {
+            model.addAttribute("currentUsername", currentUser.getUsername());
+        }
         
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
@@ -42,7 +47,9 @@ public class PostController {
 
     @PostMapping("/post")
     public String createPost(@ModelAttribute Post post, @RequestParam("imageFile") MultipartFile file, Principal principal) {
+        User currentUser = userRepository.findByEmail(principal.getName()).get();
         post.setAuthorEmail(principal.getName());
+        post.setAuthorUsername(currentUser.getUsername());
         postService.saveImageFile(post, file);
         postService.savePost(post);
         return "redirect:/"; 
@@ -51,7 +58,7 @@ public class PostController {
     @GetMapping("/post/{id}")
     public String viewPost(@PathVariable Long id, Model model, Principal principal) {
         model.addAttribute("post", postService.getPostById(id));
-        model.addAttribute("currentUser", principal.getName());
+        model.addAttribute("currentUserEmail", principal.getName());
         
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
@@ -64,7 +71,7 @@ public class PostController {
     public String showEditPostPage(@PathVariable Long id, Model model, Principal principal) {
         Post post = postService.getPostById(id);
         if (!post.getAuthorEmail().equals(principal.getName())) {
-            return "redirect:/post/" + id; // Kicks them out if not the author
+            return "redirect:/post/" + id; 
         }
         model.addAttribute("post", post);
         return "edit-post";
@@ -90,7 +97,6 @@ public class PostController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         
-        // Allowed if you are the author OR if you are an Admin
         if (post.getAuthorEmail().equals(principal.getName()) || isAdmin) {
             postService.deletePost(id);
         }

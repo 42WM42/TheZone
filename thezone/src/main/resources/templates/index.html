@@ -8,52 +8,46 @@
         .header { text-align: center; margin-bottom: 30px; }
         .btn { background: #6200ea; color: white; padding: 10px 20px; text-decoration: none; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; }
         .btn:hover { background: #7c4dff; }
-        
         .post-container { column-count: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto; }
-        
-        .post-card {
-            background: #1e1e1e; border-radius: 8px; padding: 15px; margin-bottom: 20px;
-            break-inside: avoid; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            cursor: pointer; transition: transform 0.2s; container-type: inline-size; 
-        }
+        .post-card { background: #1e1e1e; border-radius: 8px; padding: 15px; margin-bottom: 20px; break-inside: avoid; box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s; container-type: inline-size; }
         .post-card:hover { transform: scale(1.02); }
-        
         .post-content { margin-bottom: 12px; }
-        
-        .post-text {
-            white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word;
-            line-height: 1.5; margin: 0;
-        }
+        .post-text { white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word; line-height: 1.5; margin: 0; }
         .clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        
         .read-more-btn { background: none; border: none; color: #7c4dff; cursor: pointer; padding: 0; margin-top: 8px; font-weight: bold; font-size: 0.9em; display: block; }
         .read-more-btn:hover { text-decoration: underline; }
-
         .post-card img { width: 100%; height: auto; max-height: 200cqi; object-fit: cover; object-position: top; border-radius: 5px; margin-top: 10px; display: block; }
-        
-        .author-date { display: flex; justify-content: space-between; font-size: 0.8em; color: #888; margin-top: 15px; }
+        .author-date { display: flex; justify-content: space-between; font-size: 0.8em; color: #888; margin-top: 15px; font-weight: bold; }
         .admin-panel { max-width: 1200px; margin: 0 auto 30px auto; background: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #ff5252; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Welcome to The Zone</h1>
-        <p style="color: #aaa; margin-bottom: 20px;">Logged in as: <span style="color: white; font-weight: bold;" th:text="${currentUser}"></span></p>
+        <p style="color: #aaa; margin-bottom: 10px;">Logged in as: <span style="color: white; font-weight: bold;" th:text="${currentUsername}"></span></p>
         
-        <div style="display: flex; justify-content: center; gap: 15px;">
+        <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px;">
             <a href="/make-post" class="btn">Make Post</a>
             <form th:action="@{/logout}" method="post" style="margin: 0;">
                 <button type="submit" class="btn" style="background: #333;">Logout</button>
             </form>
         </div>
+
+        <!-- Change Username Form -->
+        <form th:action="@{/change-username}" method="post" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+            <input type="text" name="newUsername" placeholder="New Username" required style="padding: 10px; border-radius: 5px; border: none; background: #2a2a2a; color: white;">
+            <button type="submit" class="btn" style="background: #03dac6; color: #121212;">Update Username</button>
+        </form>
+        <div th:if="${param.error}" style="color: #ff5252; margin-bottom: 20px; font-weight: bold;">Username is already taken!</div>
+        <div th:if="${param.success}" style="color: #4CAF50; margin-bottom: 20px; font-weight: bold;">Username updated successfully!</div>
     </div>
 
-    <!-- Admin Panel (Only visible to 19073@acs.sch.ae) -->
+    <!-- Admin Panel -->
     <div th:if="${isAdmin}" class="admin-panel">
         <h3 style="margin-top: 0; color: #ff5252;">Admin Dashboard - User Management</h3>
         <form th:action="@{/admin/ban}" method="post" style="display: flex; gap: 10px;">
             <select name="email" style="padding: 10px; border-radius: 5px; flex-grow: 1; background: #2a2a2a; color: white; border: none;">
-                <option th:each="user : ${users}" th:value="${user.email}" th:text="${user.email} + (${user.banned} ? ' (BANNED)' : '')"></option>
+                <option th:each="user : ${users}" th:value="${user.email}" th:text="${user.username} + ' (' + ${user.email} + ')' + (${user.banned} ? ' (BANNED)' : '')"></option>
             </select>
             <button type="submit" class="btn" style="background: #ff5252;">Toggle Ban Status</button>
         </form>
@@ -66,9 +60,8 @@
                 <button class="read-more-btn" onclick="toggleReadMore(event, this)">Read more</button>
             </div>
             <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}">
-            
             <div class="author-date">
-                <span th:text="${post.authorEmail}"></span>
+                <span style="color: #03dac6;" th:text="'@' + ${post.authorUsername}"></span>
                 <span th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy')}"></span>
             </div>
         </div>
@@ -80,13 +73,10 @@
             posts.forEach(post => {
                 if (post.scrollHeight <= post.clientHeight) {
                     const btn = post.nextElementSibling;
-                    if (btn && btn.classList.contains('read-more-btn')) {
-                        btn.style.display = 'none';
-                    }
+                    if (btn && btn.classList.contains('read-more-btn')) { btn.style.display = 'none'; }
                 }
             });
         });
-
         function toggleReadMore(event, button) {
             event.stopPropagation(); 
             const textDiv = button.previousElementSibling;
