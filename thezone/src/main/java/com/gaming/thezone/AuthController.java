@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
+import java.util.List;
 
 @Controller
 public class AuthController {
@@ -12,11 +13,13 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PostService postService;
+    private final CommentRepository commentRepository;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, PostService postService) {
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, PostService postService, CommentRepository commentRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.postService = postService;
+        this.commentRepository = commentRepository;
     }
 
     @GetMapping("/login")
@@ -55,6 +58,12 @@ public class AuthController {
         userRepository.save(user);
         
         postService.updateUsernamesOnPosts(principal.getName(), newUsername);
+        
+        List<Comment> userComments = commentRepository.findByAuthorEmail(principal.getName());
+        for(Comment c : userComments) {
+            c.setAuthorUsername(newUsername);
+            commentRepository.save(c);
+        }
         return "redirect:/?success=UsernameChanged";
     }
     

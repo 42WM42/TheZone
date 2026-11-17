@@ -13,10 +13,12 @@ public class PostController {
 
     private final PostService postService; 
     private final UserRepository userRepository; 
+    private final CommentRepository commentRepository;
 
-    public PostController(PostService postService, UserRepository userRepository) {
+    public PostController(PostService postService, UserRepository userRepository, CommentRepository commentRepository) {
         this.postService = postService;
         this.userRepository = userRepository;
+        this.commentRepository = commentRepository;
     }
 
     @GetMapping("/")
@@ -58,6 +60,7 @@ public class PostController {
     @GetMapping("/post/{id}")
     public String viewPost(@PathVariable Long id, Model model, Principal principal) {
         model.addAttribute("post", postService.getPostById(id));
+        model.addAttribute("comments", commentRepository.findByPostIdAndParentCommentIsNullOrderByCreatedAtDesc(id));
         model.addAttribute("currentUserEmail", principal.getName());
         
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -70,9 +73,7 @@ public class PostController {
     @GetMapping("/post/{id}/edit")
     public String showEditPostPage(@PathVariable Long id, Model model, Principal principal) {
         Post post = postService.getPostById(id);
-        if (!post.getAuthorEmail().equals(principal.getName())) {
-            return "redirect:/post/" + id; 
-        }
+        if (!post.getAuthorEmail().equals(principal.getName())) { return "redirect:/post/" + id; }
         model.addAttribute("post", post);
         return "edit-post";
     }
@@ -80,13 +81,9 @@ public class PostController {
     @PostMapping("/post/{id}/edit")
     public String editPost(@PathVariable Long id, @ModelAttribute Post updatedPost, @RequestParam("imageFile") MultipartFile file, Principal principal) {
         Post existingPost = postService.getPostById(id);
-        if (!existingPost.getAuthorEmail().equals(principal.getName())) {
-            return "redirect:/post/" + id;
-        }
+        if (!existingPost.getAuthorEmail().equals(principal.getName())) { return "redirect:/post/" + id; }
         existingPost.setContent(updatedPost.getContent());
-        if (!file.isEmpty()) {
-            postService.saveImageFile(existingPost, file);
-        }
+        if (!file.isEmpty()) { postService.saveImageFile(existingPost, file); }
         postService.savePost(existingPost);
         return "redirect:/post/" + id; 
     }
