@@ -4,6 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.security.Principal;
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class AuthController {
             User user = userRepository.findByEmail(principal.getName()).orElse(null);
             if (user != null) {
                 model.addAttribute("currentUsername", user.getUsername());
+                model.addAttribute("currentPfp", user.getProfilePictureUrl());
             }
         }
         return "settings";
@@ -55,6 +57,7 @@ public class AuthController {
         user.setPassword(passwordEncoder.encode(password));
         user.setRole("ROLE_USER");
         user.setBanned(false);
+        user.setProfilePictureUrl("/images/default-pfp.png"); // Default Image
         userRepository.save(user);
         return "redirect:/login?registered";
     }
@@ -76,6 +79,24 @@ public class AuthController {
             commentRepository.save(c);
         }
         return "redirect:/settings?success=UsernameChanged";
+    }
+
+    @PostMapping("/change-pfp")
+    public String changePfp(@RequestParam("pfpFile") MultipartFile file, Principal principal) {
+        if (file.isEmpty()) return "redirect:/settings";
+        
+        User user = userRepository.findByEmail(principal.getName()).get();
+        postService.saveUserProfilePicture(user, file);
+        userRepository.save(user);
+        
+        postService.updatePfpsOnPosts(principal.getName(), user.getProfilePictureUrl());
+        
+        List<Comment> userComments = commentRepository.findByAuthorEmail(principal.getName());
+        for(Comment c : userComments) {
+            c.setAuthorProfilePictureUrl(user.getProfilePictureUrl());
+            commentRepository.save(c);
+        }
+        return "redirect:/settings?success=PfpChanged";
     }
     
     @PostMapping("/admin/ban")

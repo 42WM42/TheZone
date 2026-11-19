@@ -7,11 +7,12 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; max-width: 800px; margin: 50px auto; padding: 20px; }
         .post-card { background: #1e1e1e; border-radius: 8px; padding: 25px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 30px;}
         .post-content { line-height: 1.6; font-size: 1.1em; margin-bottom: 20px; white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word; margin-right: 40px; }
+        .post-card img.post-image { max-width: 100%; height: auto; max-height: 500px; object-fit: contain; border-radius: 5px; display: block; margin: 20px auto 0 auto; }
         
-        /* Updated Image CSS */
-        .post-card img { max-width: 100%; height: auto; max-height: 500px; object-fit: contain; border-radius: 5px; display: block; margin: 20px auto 0 auto; }
-        
-        .date { font-size: 0.9em; color: #888; margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; display: flex; justify-content: space-between; font-weight: bold;}
+        .pfp-small { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 10px; border: 2px solid #333; background: #222;}
+        .pfp-medium { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 15px; border: 2px solid #6200ea; background: #222;}
+
+        .date { font-size: 0.9em; color: #888; margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; display: flex; align-items: center;}
         .back-link { color: #7c4dff; text-decoration: none; display: inline-block; margin-bottom: 20px; font-weight: bold; }
         .back-link:hover { text-decoration: underline; }
         
@@ -24,7 +25,6 @@
         .dropdown-content .edit-btn { color: white; }
         .show { display: block !important; }
 
-        /* Comment Section Styles */
         .comment-section h3 { border-bottom: 1px solid #333; padding-bottom: 10px; }
         .comment-form textarea { width: 100%; background: #1e1e1e; color: white; border: 1px solid #555; padding: 12px; border-radius: 5px; margin-bottom: 10px; font-family: inherit; resize: vertical; box-sizing: border-box; }
         .btn { background: #6200ea; color: white; padding: 8px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
@@ -32,22 +32,20 @@
         .auth-prompt { background: #2a2a2a; padding: 20px; text-align: center; border-radius: 8px; border: 1px dashed #555; margin-bottom: 20px; }
         
         .comment-card { background: #1a1a1a; border-radius: 5px; padding: 15px; margin-top: 15px; position: relative; border-left: 3px solid #03dac6; }
-        .comment-header { font-size: 0.9em; margin-bottom: 8px; }
-        .comment-text { white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word; line-height: 1.5; font-size: 0.95em; margin-right: 30px; }
+        .comment-header { font-size: 0.9em; margin-bottom: 8px; display: flex; align-items: center;}
+        .comment-text { white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word; line-height: 1.5; font-size: 0.95em; margin-right: 30px; margin-left: 45px;}
         .clamped { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .read-more-btn { background: none; border: none; color: #7c4dff; cursor: pointer; padding: 0; margin-top: 8px; font-weight: bold; font-size: 0.85em; display: block; }
+        .read-more-btn { background: none; border: none; color: #7c4dff; cursor: pointer; padding: 0; margin-top: 8px; margin-left: 45px; font-weight: bold; font-size: 0.85em; display: block; }
         .read-more-btn:hover { text-decoration: underline; }
-        .reply-toggle-btn { background: none; border: none; color: #aaa; cursor: pointer; font-weight: bold; font-size: 0.85em; padding: 0; margin-top: 10px; }
+        .reply-toggle-btn { background: none; border: none; color: #aaa; cursor: pointer; font-weight: bold; font-size: 0.85em; padding: 0; margin-top: 10px; margin-left: 45px;}
         .reply-toggle-btn:hover { color: white; }
-        .nested-comments { margin-left: 20px; border-left: 1px solid #333; padding-left: 10px; }
+        .nested-comments { margin-left: 45px; border-left: 1px solid #333; padding-left: 15px; }
     </style>
 </head>
 <body>
     <a href="/" class="back-link">← Back to Feed</a>
 
-    <!-- Main Post -->
     <div class="post-card">
-        <!-- Only show menu if user is logged in AND is author or admin -->
         <div class="menu-container" th:if="${currentUserEmail != null and (post.authorEmail == currentUserEmail or isAdmin)}">
             <button class="three-dots" onclick="toggleMenu(this)">⋮</button>
             <div class="dropdown-content">
@@ -59,19 +57,20 @@
         </div>
         
         <div class="post-content" th:text="${post.content}"></div>
-        <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}">
+        <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}" class="post-image">
         
         <div class="date">
-            <span style="color: #03dac6;" th:text="'Posted by: @' + ${post.authorUsername}"></span>
-            <span th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy HH:mm')}"></span>
+            <img th:src="${post.authorProfilePictureUrl != null ? post.authorProfilePictureUrl : '/images/default-pfp.png'}" class="pfp-medium">
+            <div>
+                <div style="color: #03dac6; font-weight: bold; margin-bottom: 3px;" th:text="'@' + ${post.authorUsername}"></div>
+                <div th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy HH:mm')}"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Comments Section -->
     <div class="comment-section">
         <h3>Comments</h3>
         
-        <!-- Add Top Level Comment (Logged In) -->
         <div th:if="${currentUserEmail != null}">
             <form class="comment-form" th:action="@{/post/{id}/comment(id=${post.id})}" method="post">
                 <textarea name="content" required placeholder="Add a comment..."></textarea>
@@ -79,22 +78,18 @@
             </form>
         </div>
 
-        <!-- Add Top Level Comment (Logged Out Prompt) -->
         <div th:if="${currentUserEmail == null}" class="auth-prompt">
             <p style="margin: 0; color: #aaa;">You must <a th:href="@{/login}" style="color: #03dac6; font-weight: bold; text-decoration: none;">Log In</a> or <a th:href="@{/register}" style="color: #03dac6; font-weight: bold; text-decoration: none;">Register</a> to comment and reply.</p>
         </div>
 
-        <!-- Comments List -->
         <div class="comments-list">
             <div th:replace="~{this :: commentList(${comments})}"></div>
         </div>
     </div>
 
-    <!-- Recursive Thymeleaf Fragment for Comments and Replies -->
     <div th:fragment="commentList(commentList)">
         <div th:each="comment : ${commentList}" class="comment-card">
             
-            <!-- Comment Menu (Edit/Delete - Requires Auth) -->
             <div class="menu-container" th:if="${currentUserEmail != null and (comment.authorEmail == currentUserEmail or isAdmin)}">
                 <button class="three-dots" type="button" onclick="toggleMenu(this)">⋮</button>
                 <div class="dropdown-content">
@@ -105,37 +100,34 @@
                 </div>
             </div>
 
-            <!-- Comment Header -->
             <div class="comment-header">
-                <span style="color: #03dac6; font-weight: bold;" th:text="'@' + ${comment.authorUsername}"></span>
-                <span style="color: #888; font-size: 0.9em; margin-left: 10px;" th:text="${#temporals.format(comment.createdAt, 'MMM dd, yyyy HH:mm')}"></span>
-                <span th:if="${comment.edited}" style="color: #888; font-style: italic; font-size: 0.9em;"> (edited)</span>
+                <img th:src="${comment.authorProfilePictureUrl != null ? comment.authorProfilePictureUrl : '/images/default-pfp.png'}" class="pfp-small">
+                <div>
+                    <span style="color: #03dac6; font-weight: bold;" th:text="'@' + ${comment.authorUsername}"></span>
+                    <span style="color: #888; font-size: 0.9em; margin-left: 10px;" th:text="${#temporals.format(comment.createdAt, 'MMM dd, yyyy HH:mm')}"></span>
+                    <span th:if="${comment.edited}" style="color: #888; font-style: italic; font-size: 0.9em;"> (edited)</span>
+                </div>
             </div>
 
-            <!-- Comment Content (View Mode) -->
             <div th:id="'comment-view-' + ${comment.id}">
                 <div class="comment-text clamped" th:text="${comment.content}"></div>
                 <button class="read-more-btn" onclick="toggleReadMore(event, this)">Read more</button>
                 
-                <!-- Reply Button (Only shown if logged in) -->
                 <button class="reply-toggle-btn" th:if="${currentUserEmail != null}" th:onclick="'toggleReplyForm(' + ${comment.id} + ')'">Reply</button>
             </div>
 
-            <!-- Comment Content (Edit Mode) -->
-            <form th:if="${currentUserEmail != null}" th:id="'comment-edit-' + ${comment.id}" class="comment-form" th:action="@{/comment/{id}/edit(id=${comment.id})}" method="post" style="display: none; margin-top: 10px;">
+            <form th:if="${currentUserEmail != null}" th:id="'comment-edit-' + ${comment.id}" class="comment-form" th:action="@{/comment/{id}/edit(id=${comment.id})}" method="post" style="display: none; margin-top: 10px; margin-left: 45px;">
                 <textarea name="content" required th:text="${comment.content}"></textarea>
                 <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.9em;">Save</button>
                 <button type="button" class="btn" style="background: #555; padding: 5px 10px; font-size: 0.9em;" th:onclick="'toggleEditForm(' + ${comment.id} + ')'">Cancel</button>
             </form>
 
-            <!-- Reply Form (Hidden by default, Requires Auth) -->
-            <form th:if="${currentUserEmail != null}" th:id="'reply-form-' + ${comment.id}" class="comment-form" th:action="@{/post/{postId}/comment(postId=${post.id})}" method="post" style="display: none; margin-top: 15px;">
+            <form th:if="${currentUserEmail != null}" th:id="'reply-form-' + ${comment.id}" class="comment-form" th:action="@{/post/{postId}/comment(postId=${post.id})}" method="post" style="display: none; margin-top: 15px; margin-left: 45px;">
                 <input type="hidden" name="parentId" th:value="${comment.id}" />
                 <textarea name="content" required placeholder="Write a reply..."></textarea>
                 <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.9em;">Submit Reply</button>
             </form>
 
-            <!-- Nested Replies -->
             <div class="nested-comments" th:if="${!comment.replies.isEmpty()}">
                 <div th:replace="~{this :: commentList(${comment.replies})}"></div>
             </div>

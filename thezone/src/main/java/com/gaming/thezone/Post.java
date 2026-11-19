@@ -34,4 +34,7 @@ public class Post {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public List<Comment> getComments() { return comments; }
     public void setComments(List<Comment> comments) { this.comments = comments; }
+    private String authorProfilePictureUrl;
+    public String getAuthorProfilePictureUrl() { return authorProfilePictureUrl; }
+    public void setAuthorProfilePictureUrl(String authorProfilePictureUrl) { this.authorProfilePictureUrl = authorProfilePictureUrl; }
 }

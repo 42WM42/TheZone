@@ -5,25 +5,39 @@
     <title>Settings - The Zone</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; max-width: 500px; margin: 50px auto; padding: 20px; }
-        .settings-card { background: #1e1e1e; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-top: 20px; }
+        .settings-card { background: #1e1e1e; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-top: 20px; margin-bottom: 20px;}
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; color: #ccc;}
-        input[type="text"] { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #2a2a2a; color: white; box-sizing: border-box; font-family: inherit;}
+        input[type="text"], input[type="file"] { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #2a2a2a; color: white; box-sizing: border-box; font-family: inherit;}
         .btn { background: #6200ea; color: white; padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer; width: 100%; font-family: inherit;}
         .btn:hover { background: #7c4dff; }
         .back-link { color: #7c4dff; text-decoration: none; display: inline-block; margin-bottom: 10px; font-weight: bold; }
         .back-link:hover { text-decoration: underline; }
         .msg-success { color: #03dac6; background: #00332c; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-weight: bold;}
         .msg-error { color: #ff5252; background: #4a0000; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-weight: bold;}
+        .pfp-large { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #6200ea; display: block; margin: 0 auto 15px auto;}
     </style>
 </head>
 <body>
     <a href="/" class="back-link">← Back to Feed</a>
 
     <div class="settings-card">
-        <h2 style="margin-top:0; border-bottom: 1px solid #333; padding-bottom: 15px;">Account Settings</h2>
+        <h2 style="margin-top:0; border-bottom: 1px solid #333; padding-bottom: 15px;">Profile Picture</h2>
+        <div th:if="${param.success != null and param.success[0] == 'PfpChanged'}" class="msg-success">Profile picture updated!</div>
         
-        <div th:if="${param.success != null}" class="msg-success">Username updated successfully!</div>
+        <form th:action="@{/change-pfp}" method="post" enctype="multipart/form-data">
+            <div class="form-group" style="text-align: center;">
+                <img th:src="${currentPfp != null ? currentPfp : '/images/default-pfp.png'}" class="pfp-large">
+                <input type="file" name="pfpFile" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn">Upload New Picture</button>
+        </form>
+    </div>
+
+    <div class="settings-card">
+        <h2 style="margin-top:0; border-bottom: 1px solid #333; padding-bottom: 15px;">Change Username</h2>
+        
+        <div th:if="${param.success != null and param.success[0] == 'UsernameChanged'}" class="msg-success">Username updated successfully!</div>
         <div th:if="${param.error != null}" class="msg-error">That username is already taken.</div>
 
         <form th:action="@{/change-username}" method="post">
@@ -32,10 +46,10 @@
                 <input type="text" th:value="${currentUsername}" disabled style="opacity: 0.6; cursor: not-allowed;">
             </div>
             <div class="form-group">
-                <label for="newUsername">Change Username</label>
+                <label for="newUsername">New Username</label>
                 <input type="text" id="newUsername" name="newUsername" required placeholder="Enter new username">
             </div>
-            <button type="submit" class="btn">Save Changes</button>
+            <button type="submit" class="btn">Save Username</button>
         </form>
     </div>
 </body>

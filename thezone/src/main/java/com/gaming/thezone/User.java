@@ -33,4 +33,7 @@ public class User {
     public void setRole(String role) { this.role = role; }
     public boolean isBanned() { return banned; }
     public void setBanned(boolean banned) { this.banned = banned; }
+    private String profilePictureUrl;
+    public String getProfilePictureUrl() { return profilePictureUrl; }
+    public void setProfilePictureUrl(String profilePictureUrl) { this.profilePictureUrl = profilePictureUrl; }
 }

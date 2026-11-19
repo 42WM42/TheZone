@@ -14,8 +14,6 @@ import java.util.UUID;
 public class PostService {
 
     private final PostRepository postRepository;
-    
-    // Defines where the images are saved. Make sure this matches your setup.
     private final String UPLOAD_DIR = "uploads/";
 
     public PostService(PostRepository postRepository) {
@@ -23,7 +21,6 @@ public class PostService {
     }
 
     public List<Post> getAllPosts() {
-        // Changed: Now fetches posts ordered by newest first
         return postRepository.findAllByOrderByCreatedAtDesc();
     }
 
@@ -51,20 +48,39 @@ public class PostService {
             }
         }
     }
+    
+    public void updatePfpsOnPosts(String email, String newPfpUrl) {
+        List<Post> posts = postRepository.findAll();
+        for (Post post : posts) {
+            if (post.getAuthorEmail().equals(email)) {
+                post.setAuthorProfilePictureUrl(newPfpUrl);
+                postRepository.save(post);
+            }
+        }
+    }
 
     public void saveImageFile(Post post, MultipartFile file) {
         if (file != null && !file.isEmpty()) {
             try {
-                // Generate a unique file name to prevent overwriting
                 String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
                 Path path = Paths.get(UPLOAD_DIR + filename);
-                
-                // Create the uploads directory if it doesn't exist
                 Files.createDirectories(path.getParent());
                 Files.write(path, file.getBytes());
-                
-                // Save the path to the post object
                 post.setImageUrl("/uploads/" + filename);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void saveUserProfilePicture(User user, MultipartFile file) {
+        if (file != null && !file.isEmpty()) {
+            try {
+                String filename = UUID.randomUUID().toString() + "_pfp_" + file.getOriginalFilename();
+                Path path = Paths.get(UPLOAD_DIR + filename);
+                Files.createDirectories(path.getParent());
+                Files.write(path, file.getBytes());
+                user.setProfilePictureUrl("/uploads/" + filename);
             } catch (IOException e) {
                 e.printStackTrace();
             }

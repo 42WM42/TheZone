@@ -28,7 +28,10 @@ public class PostController {
         if (principal != null) {
             model.addAttribute("currentUserEmail", principal.getName());
             User currentUser = userRepository.findByEmail(principal.getName()).orElse(null);
-            if (currentUser != null) { model.addAttribute("currentUsername", currentUser.getUsername()); }
+            if (currentUser != null) { 
+                model.addAttribute("currentUsername", currentUser.getUsername()); 
+                model.addAttribute("currentUserPfp", currentUser.getProfilePictureUrl()); 
+            }
             
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
@@ -37,6 +40,7 @@ public class PostController {
         } else {
             model.addAttribute("currentUserEmail", null);
             model.addAttribute("currentUsername", null);
+            model.addAttribute("currentUserPfp", null);
             model.addAttribute("isAdmin", false);
         }
         
@@ -54,6 +58,7 @@ public class PostController {
         User currentUser = userRepository.findByEmail(principal.getName()).get();
         post.setAuthorEmail(principal.getName());
         post.setAuthorUsername(currentUser.getUsername());
+        post.setAuthorProfilePictureUrl(currentUser.getProfilePictureUrl()); // Set PFP on post
         postService.saveImageFile(post, file);
         postService.savePost(post);
         return "redirect:/"; 
@@ -66,11 +71,16 @@ public class PostController {
         
         if (principal != null) {
             model.addAttribute("currentUserEmail", principal.getName());
+            User currentUser = userRepository.findByEmail(principal.getName()).orElse(null);
+            if (currentUser != null) { 
+                model.addAttribute("currentUserPfp", currentUser.getProfilePictureUrl()); 
+            }
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             model.addAttribute("isAdmin", isAdmin);
         } else {
             model.addAttribute("currentUserEmail", null);
+            model.addAttribute("currentUserPfp", null);
             model.addAttribute("isAdmin", false);
         }
         

@@ -48,4 +48,7 @@ public class Comment {
     public void setParentComment(Comment parentComment) { this.parentComment = parentComment; }
     public List<Comment> getReplies() { return replies; }
     public void setReplies(List<Comment> replies) { this.replies = replies; }
+    private String authorProfilePictureUrl;
+    public String getAuthorProfilePictureUrl() { return authorProfilePictureUrl; }
+    public void setAuthorProfilePictureUrl(String authorProfilePictureUrl) { this.authorProfilePictureUrl = authorProfilePictureUrl; }
 }
