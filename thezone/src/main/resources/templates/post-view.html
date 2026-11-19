@@ -5,9 +5,12 @@
     <title>View Post - The Zone</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; max-width: 800px; margin: 50px auto; padding: 20px; }
-        .post-card { background: #1e1e1e; border-radius: 8px; padding: 25px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.3); container-type: inline-size; margin-bottom: 30px;}
+        .post-card { background: #1e1e1e; border-radius: 8px; padding: 25px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 30px;}
         .post-content { line-height: 1.6; font-size: 1.1em; margin-bottom: 20px; white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word; margin-right: 40px; }
-        .post-card img { width: 100%; height: auto; max-height: 200cqi; object-fit: cover; object-position: top; border-radius: 5px; display: block; margin: 0 auto; }
+        
+        /* Updated Image CSS */
+        .post-card img { max-width: 100%; height: auto; max-height: 500px; object-fit: contain; border-radius: 5px; display: block; margin: 20px auto 0 auto; }
+        
         .date { font-size: 0.9em; color: #888; margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; display: flex; justify-content: space-between; font-weight: bold;}
         .back-link { color: #7c4dff; text-decoration: none; display: inline-block; margin-bottom: 20px; font-weight: bold; }
         .back-link:hover { text-decoration: underline; }
@@ -26,6 +29,7 @@
         .comment-form textarea { width: 100%; background: #1e1e1e; color: white; border: 1px solid #555; padding: 12px; border-radius: 5px; margin-bottom: 10px; font-family: inherit; resize: vertical; box-sizing: border-box; }
         .btn { background: #6200ea; color: white; padding: 8px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
         .btn:hover { background: #7c4dff; }
+        .auth-prompt { background: #2a2a2a; padding: 20px; text-align: center; border-radius: 8px; border: 1px dashed #555; margin-bottom: 20px; }
         
         .comment-card { background: #1a1a1a; border-radius: 5px; padding: 15px; margin-top: 15px; position: relative; border-left: 3px solid #03dac6; }
         .comment-header { font-size: 0.9em; margin-bottom: 8px; }
@@ -43,7 +47,8 @@
 
     <!-- Main Post -->
     <div class="post-card">
-        <div class="menu-container" th:if="${post.authorEmail == currentUserEmail or isAdmin}">
+        <!-- Only show menu if user is logged in AND is author or admin -->
+        <div class="menu-container" th:if="${currentUserEmail != null and (post.authorEmail == currentUserEmail or isAdmin)}">
             <button class="three-dots" onclick="toggleMenu(this)">⋮</button>
             <div class="dropdown-content">
                 <a th:if="${post.authorEmail == currentUserEmail}" th:href="@{/post/{id}/edit(id=${post.id})}">Edit</a>
@@ -52,8 +57,10 @@
                 </form>
             </div>
         </div>
+        
         <div class="post-content" th:text="${post.content}"></div>
         <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}">
+        
         <div class="date">
             <span style="color: #03dac6;" th:text="'Posted by: @' + ${post.authorUsername}"></span>
             <span th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy HH:mm')}"></span>
@@ -64,11 +71,18 @@
     <div class="comment-section">
         <h3>Comments</h3>
         
-        <!-- Add Top Level Comment -->
-        <form class="comment-form" th:action="@{/post/{id}/comment(id=${post.id})}" method="post">
-            <textarea name="content" required placeholder="Add a comment..."></textarea>
-            <button type="submit" class="btn">Comment</button>
-        </form>
+        <!-- Add Top Level Comment (Logged In) -->
+        <div th:if="${currentUserEmail != null}">
+            <form class="comment-form" th:action="@{/post/{id}/comment(id=${post.id})}" method="post">
+                <textarea name="content" required placeholder="Add a comment..."></textarea>
+                <button type="submit" class="btn">Comment</button>
+            </form>
+        </div>
+
+        <!-- Add Top Level Comment (Logged Out Prompt) -->
+        <div th:if="${currentUserEmail == null}" class="auth-prompt">
+            <p style="margin: 0; color: #aaa;">You must <a th:href="@{/login}" style="color: #03dac6; font-weight: bold; text-decoration: none;">Log In</a> or <a th:href="@{/register}" style="color: #03dac6; font-weight: bold; text-decoration: none;">Register</a> to comment and reply.</p>
+        </div>
 
         <!-- Comments List -->
         <div class="comments-list">
@@ -80,8 +94,8 @@
     <div th:fragment="commentList(commentList)">
         <div th:each="comment : ${commentList}" class="comment-card">
             
-            <!-- Comment Menu (Edit/Delete) -->
-            <div class="menu-container" th:if="${comment.authorEmail == currentUserEmail or isAdmin}">
+            <!-- Comment Menu (Edit/Delete - Requires Auth) -->
+            <div class="menu-container" th:if="${currentUserEmail != null and (comment.authorEmail == currentUserEmail or isAdmin)}">
                 <button class="three-dots" type="button" onclick="toggleMenu(this)">⋮</button>
                 <div class="dropdown-content">
                     <button class="edit-btn" th:if="${comment.authorEmail == currentUserEmail}" type="button" th:onclick="'toggleEditForm(' + ${comment.id} + ')'">Edit</button>
@@ -102,18 +116,20 @@
             <div th:id="'comment-view-' + ${comment.id}">
                 <div class="comment-text clamped" th:text="${comment.content}"></div>
                 <button class="read-more-btn" onclick="toggleReadMore(event, this)">Read more</button>
-                <button class="reply-toggle-btn" th:onclick="'toggleReplyForm(' + ${comment.id} + ')'">Reply</button>
+                
+                <!-- Reply Button (Only shown if logged in) -->
+                <button class="reply-toggle-btn" th:if="${currentUserEmail != null}" th:onclick="'toggleReplyForm(' + ${comment.id} + ')'">Reply</button>
             </div>
 
             <!-- Comment Content (Edit Mode) -->
-            <form th:id="'comment-edit-' + ${comment.id}" class="comment-form" th:action="@{/comment/{id}/edit(id=${comment.id})}" method="post" style="display: none; margin-top: 10px;">
+            <form th:if="${currentUserEmail != null}" th:id="'comment-edit-' + ${comment.id}" class="comment-form" th:action="@{/comment/{id}/edit(id=${comment.id})}" method="post" style="display: none; margin-top: 10px;">
                 <textarea name="content" required th:text="${comment.content}"></textarea>
                 <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.9em;">Save</button>
                 <button type="button" class="btn" style="background: #555; padding: 5px 10px; font-size: 0.9em;" th:onclick="'toggleEditForm(' + ${comment.id} + ')'">Cancel</button>
             </form>
 
-            <!-- Reply Form (Hidden by default) -->
-            <form th:id="'reply-form-' + ${comment.id}" class="comment-form" th:action="@{/post/{postId}/comment(postId=${post.id})}" method="post" style="display: none; margin-top: 15px;">
+            <!-- Reply Form (Hidden by default, Requires Auth) -->
+            <form th:if="${currentUserEmail != null}" th:id="'reply-form-' + ${comment.id}" class="comment-form" th:action="@{/post/{postId}/comment(postId=${post.id})}" method="post" style="display: none; margin-top: 15px;">
                 <input type="hidden" name="parentId" th:value="${comment.id}" />
                 <textarea name="content" required placeholder="Write a reply..."></textarea>
                 <button type="submit" class="btn" style="padding: 5px 10px; font-size: 0.9em;">Submit Reply</button>
@@ -127,7 +143,6 @@
     </div>
 
     <script>
-        // Dropdown Menu Logic for both Post and Comments
         function toggleMenu(button) {
             button.nextElementSibling.classList.toggle("show");
         }
@@ -143,7 +158,6 @@
             }
         }
 
-        // Form Toggles
         function toggleEditForm(commentId) {
             const viewDiv = document.getElementById('comment-view-' + commentId);
             const editForm = document.getElementById('comment-edit-' + commentId);
@@ -161,7 +175,6 @@
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
         }
 
-        // Read More Clamping Logic
         document.addEventListener("DOMContentLoaded", function() {
             const texts = document.querySelectorAll('.clamped');
             texts.forEach(text => {

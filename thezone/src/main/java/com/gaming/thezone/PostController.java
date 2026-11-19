@@ -24,20 +24,22 @@ public class PostController {
     @GetMapping("/")
     public String home(Model model, Principal principal) {
         model.addAttribute("posts", postService.getAllPosts());
-        model.addAttribute("currentUserEmail", principal.getName());
         
-        User currentUser = userRepository.findByEmail(principal.getName()).orElse(null);
-        if (currentUser != null) {
-            model.addAttribute("currentUsername", currentUser.getUsername());
-        }
-        
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            model.addAttribute("isAdmin", true);
-            model.addAttribute("users", userRepository.findAll());
+        if (principal != null) {
+            model.addAttribute("currentUserEmail", principal.getName());
+            User currentUser = userRepository.findByEmail(principal.getName()).orElse(null);
+            if (currentUser != null) { model.addAttribute("currentUsername", currentUser.getUsername()); }
+            
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            model.addAttribute("isAdmin", isAdmin);
+            if (isAdmin) { model.addAttribute("users", userRepository.findAll()); }
         } else {
+            model.addAttribute("currentUserEmail", null);
+            model.addAttribute("currentUsername", null);
             model.addAttribute("isAdmin", false);
         }
+        
         return "index";
     }
 
@@ -61,11 +63,16 @@ public class PostController {
     public String viewPost(@PathVariable Long id, Model model, Principal principal) {
         model.addAttribute("post", postService.getPostById(id));
         model.addAttribute("comments", commentRepository.findByPostIdAndParentCommentIsNullOrderByCreatedAtDesc(id));
-        model.addAttribute("currentUserEmail", principal.getName());
         
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        model.addAttribute("isAdmin", isAdmin);
+        if (principal != null) {
+            model.addAttribute("currentUserEmail", principal.getName());
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            model.addAttribute("isAdmin", isAdmin);
+        } else {
+            model.addAttribute("currentUserEmail", null);
+            model.addAttribute("isAdmin", false);
+        }
         
         return "post-view";
     }

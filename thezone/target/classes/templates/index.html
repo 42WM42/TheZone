@@ -2,92 +2,80 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>The Zone</title>
+    <title>The Zone - Feed</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 20px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .btn { background: #6200ea; color: white; padding: 10px 20px; text-decoration: none; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { margin: 0; color: #7c4dff; text-decoration: none;}
+        .header a.logo { text-decoration: none; color: inherit; }
+        .btn { background: #6200ea; color: white; padding: 10px 15px; border: none; border-radius: 5px; text-decoration: none; font-weight: bold; cursor: pointer; display: inline-block; }
         .btn:hover { background: #7c4dff; }
-        .post-container { column-count: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .post-card { background: #1e1e1e; border-radius: 8px; padding: 15px; margin-bottom: 20px; break-inside: avoid; box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s; container-type: inline-size; }
-        .post-card:hover { transform: scale(1.02); }
-        .post-content { margin-bottom: 12px; }
-        .post-text { white-space: pre-wrap; overflow-wrap: break-word; word-wrap: break-word; line-height: 1.5; margin: 0; }
-        .clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .read-more-btn { background: none; border: none; color: #7c4dff; cursor: pointer; padding: 0; margin-top: 8px; font-weight: bold; font-size: 0.9em; display: block; }
-        .read-more-btn:hover { text-decoration: underline; }
-        .post-card img { width: 100%; height: auto; max-height: 200cqi; object-fit: cover; object-position: top; border-radius: 5px; margin-top: 10px; display: block; }
-        .author-date { display: flex; justify-content: space-between; font-size: 0.8em; color: #888; margin-top: 15px; font-weight: bold; }
-        .admin-panel { max-width: 1200px; margin: 0 auto 30px auto; background: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #ff5252; }
+        .btn-secondary { background: #333; }
+        .btn-secondary:hover { background: #444; }
+        .post-card { background: #1e1e1e; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-decoration: none; display: block; color: inherit; transition: transform 0.2s; }
+        .post-card:hover { transform: translateY(-3px); border: 1px solid #333;}
+        
+        /* Updated Image CSS */
+        .post-card img { max-width: 100%; max-height: 400px; height: auto; object-fit: contain; border-radius: 5px; margin: 15px auto 0 auto; display: block; }
+        
+        .post-meta { font-size: 0.9em; color: #888; margin-top: 15px; display: flex; justify-content: space-between; }
+        .admin-panel { background: #2a2a2a; padding: 15px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #ff5252; }
+        .admin-panel h3 { margin-top: 0; color: #ff5252; }
+        .user-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #444; }
     </style>
 </head>
 <body>
+
     <div class="header">
-        <h1>Welcome to The Zone</h1>
-        <p style="color: #aaa; margin-bottom: 10px;">Logged in as: <span style="color: white; font-weight: bold;" th:text="${currentUsername}"></span></p>
+        <a href="/" class="logo"><h1>The Zone</h1></a>
         
-        <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px;">
-            <a href="/make-post" class="btn">Make Post</a>
-            <form th:action="@{/logout}" method="post" style="margin: 0;">
-                <button type="submit" class="btn" style="background: #333;">Logout</button>
+        <!-- Logged In Controls -->
+        <div th:if="${currentUserEmail != null}">
+            <span style="margin-right: 15px; font-weight: bold; color: #03dac6;">@<span th:text="${currentUsername}"></span></span>
+            <a th:href="@{/make-post}" class="btn">New Post</a>
+            <a th:href="@{/settings}" class="btn btn-secondary">Settings</a>
+            <form th:action="@{/logout}" method="post" style="display:inline; margin-left: 5px;">
+                <button type="submit" class="btn btn-secondary">Logout</button>
             </form>
         </div>
-
-        <!-- Change Username Form -->
-        <form th:action="@{/change-username}" method="post" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-            <input type="text" name="newUsername" placeholder="New Username" required style="padding: 10px; border-radius: 5px; border: none; background: #2a2a2a; color: white;">
-            <button type="submit" class="btn" style="background: #03dac6; color: #121212;">Update Username</button>
-        </form>
-        <div th:if="${param.error}" style="color: #ff5252; margin-bottom: 20px; font-weight: bold;">Username is already taken!</div>
-        <div th:if="${param.success}" style="color: #4CAF50; margin-bottom: 20px; font-weight: bold;">Username updated successfully!</div>
+        
+        <!-- Logged Out Controls -->
+        <div th:if="${currentUserEmail == null}">
+            <a th:href="@{/login}" class="btn" style="background: #333; margin-right: 5px;">Log in to post</a>
+            <a th:href="@{/login}" class="btn btn-secondary">Login</a>
+            <a th:href="@{/register}" class="btn btn-secondary">Register</a>
+        </div>
     </div>
 
     <!-- Admin Panel -->
     <div th:if="${isAdmin}" class="admin-panel">
-        <h3 style="margin-top: 0; color: #ff5252;">Admin Dashboard - User Management</h3>
-        <form th:action="@{/admin/ban}" method="post" style="display: flex; gap: 10px;">
-            <select name="email" style="padding: 10px; border-radius: 5px; flex-grow: 1; background: #2a2a2a; color: white; border: none;">
-                <option th:each="user : ${users}" th:value="${user.email}" th:text="${user.username} + ' (' + ${user.email} + ')' + (${user.banned} ? ' (BANNED)' : '')"></option>
-            </select>
-            <button type="submit" class="btn" style="background: #ff5252;">Toggle Ban Status</button>
-        </form>
-    </div>
-
-    <div class="post-container">
-        <div class="post-card" th:each="post : ${posts}" th:onclick="'window.location.href=\'/post/' + ${post.id} + '\''">
-            <div class="post-content">
-                <div class="post-text clamped" th:text="${post.content}"></div>
-                <button class="read-more-btn" onclick="toggleReadMore(event, this)">Read more</button>
-            </div>
-            <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}">
-            <div class="author-date">
-                <span style="color: #03dac6;" th:text="'@' + ${post.authorUsername}"></span>
-                <span th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy')}"></span>
-            </div>
+        <h3>Admin Dashboard (Manage Users)</h3>
+        <div th:each="user : ${users}" class="user-row">
+            <span th:text="${user.username} + ' (' +${user.email} + ')'"></span>
+            <span>
+                <span th:if="${user.banned}" style="color: #ff5252; font-weight: bold; margin-right: 10px;">BANNED</span>
+                <form th:if="${user.role != 'ROLE_ADMIN'}" th:action="@{/admin/ban}" method="post" style="display:inline;">
+                    <input type="hidden" name="email" th:value="${user.email}" />
+                    <button type="submit" class="btn" style="padding: 5px 10px; background: #ff5252;" th:text="${user.banned ? 'Unban' : 'Ban'}"></button>
+                </form>
+            </span>
         </div>
     </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const posts = document.querySelectorAll('.post-text');
-            posts.forEach(post => {
-                if (post.scrollHeight <= post.clientHeight) {
-                    const btn = post.nextElementSibling;
-                    if (btn && btn.classList.contains('read-more-btn')) { btn.style.display = 'none'; }
-                }
-            });
-        });
-        function toggleReadMore(event, button) {
-            event.stopPropagation(); 
-            const textDiv = button.previousElementSibling;
-            if (textDiv.classList.contains('clamped')) {
-                textDiv.classList.remove('clamped');
-                button.innerText = 'Read less';
-            } else {
-                textDiv.classList.add('clamped');
-                button.innerText = 'Read more';
-            }
-        }
-    </script>
+    <!-- Feed -->
+    <h2>Recent Posts</h2>
+    <div th:if="${#lists.isEmpty(posts)}">
+        <p style="color:#aaa;">No posts yet.</p>
+    </div>
+    
+    <a th:each="post : ${posts}" th:href="@{/post/{id}(id=${post.id})}" class="post-card">
+        <div style="font-size: 1.1em; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;" th:text="${post.content}"></div>
+        <img th:if="${post.imageUrl != null and !post.imageUrl.isEmpty()}" th:src="${post.imageUrl}">
+        <div class="post-meta">
+            <span style="color: #03dac6; font-weight: bold;" th:text="'@' + ${post.authorUsername}"></span>
+            <span th:text="${#temporals.format(post.createdAt, 'MMM dd, yyyy HH:mm')}"></span>
+        </div>
+    </a>
+
 </body>
 </html>

@@ -28,6 +28,17 @@ public class AuthController {
     @GetMapping("/register")
     public String registerPage() { return "register"; }
 
+    @GetMapping("/settings")
+    public String settingsPage(Model model, Principal principal) {
+        if (principal != null) {
+            User user = userRepository.findByEmail(principal.getName()).orElse(null);
+            if (user != null) {
+                model.addAttribute("currentUsername", user.getUsername());
+            }
+        }
+        return "settings";
+    }
+
     @PostMapping("/register")
     public String registerUser(@RequestParam String email, @RequestParam String username, @RequestParam String password, Model model) {
         if (userRepository.findByEmail(email).isPresent()) {
@@ -51,7 +62,7 @@ public class AuthController {
     @PostMapping("/change-username")
     public String changeUsername(@RequestParam String newUsername, Principal principal) {
         if (userRepository.findByUsername(newUsername).isPresent()) {
-            return "redirect:/?error=UsernameTaken";
+            return "redirect:/settings?error=UsernameTaken";
         }
         User user = userRepository.findByEmail(principal.getName()).get();
         user.setUsername(newUsername);
@@ -64,7 +75,7 @@ public class AuthController {
             c.setAuthorUsername(newUsername);
             commentRepository.save(c);
         }
-        return "redirect:/?success=UsernameChanged";
+        return "redirect:/settings?success=UsernameChanged";
     }
     
     @PostMapping("/admin/ban")
